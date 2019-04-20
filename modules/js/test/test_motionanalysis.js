@@ -1,4 +1,4 @@
-//  //////////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
@@ -38,22 +38,65 @@
 // the use of this software, even if advised of the possibility of such damage.
 //
 
-let testrunner = require('node-qunit');
-testrunner.options.maxBlockDuration = 20000; // cause opencv_js.js need time to load
+// Author : Riccardo Trocca, Analytics Training. riccardo.trocca[at]gmail[dot]com
 
-testrunner.run(
+if (typeof module !== 'undefined' && module.exports) {
+    // The envrionment is Node.js
+    var cv = require('./opencv.js'); // eslint-disable-line no-var
+}
+
+
+QUnit.module('MotionAnalysis', {});
+
+QUnit.test('accumulate', function(assert) {
     {
-        code: 'opencv.js',
-        tests: ['test_mat.js', 'test_utils.js', 'test_imgproc.js',
-                'test_objdetect.js', 'test_video.js', 'test_features2d.js',
-                'test_photo.js', 'test_motionanalysis.js'],
-    },
-    function(err, report) {
-        console.log(report.failed + ' failed, ' + report.passed + ' passed');
-        if (report.failed) {
-            process.on('exit', function() {
-                process.exit(1);
-            });
-        }
+        let one = new cv.Mat.ones( new cv.Size(10,10), cv.CV_8UC1);
+        let acc = new cv.Mat(10,10, cv.CV_32FC1);
+        cv.accumulate(one, acc);
+        assert.ok(acc.data32F[0] === 1);
+        one.delete();
+        acc.delete();
     }
-);
+});
+
+QUnit.test('accumulateProduct', function(assert) {
+    {
+        let one = new cv.Mat.ones( new cv.Size(10,10), cv.CV_8UC1);
+        let two = new cv.Mat.ones( new cv.Size(10,10), cv.CV_8UC1);
+        for (let i = 0; i < one.cols * one.rows; i++) {
+            one.data[i] = 2 * one.data[1];
+            two.data[i] = 2 * two.data[1];
+        }
+        let acc = new cv.Mat(10,10, cv.CV_32FC1);
+        cv.accumulateProduct(one, two, acc);
+        assert.ok(acc.data32F[0] === 4);
+        one.delete();
+        two.delete();
+        acc.delete();
+    }
+});
+
+QUnit.test('accumulateSquare', function(assert) {
+    {
+        let one = new cv.Mat.ones( new cv.Size(10,10), cv.CV_8UC1);
+        for (let i = 0; i < one.cols * one.rows; i++) {
+            one.data[i] = 2 * one.data[1];
+        }
+        let acc = new cv.Mat(10,10, cv.CV_32FC1);
+        cv.accumulateSquare(one, acc);
+        assert.ok(acc.data32F[0] === 4);
+        one.delete();
+        acc.delete();
+    }
+});
+
+QUnit.test('accumulateWeighted', function(assert) {
+    {
+        let one = new cv.Mat.ones( new cv.Size(20,20), cv.CV_8UC1);
+        let acc = new cv.Mat(20,20, cv.CV_32FC1);
+        cv.accumulateWeighted(one, acc, 0.5);
+        assert.ok(acc.data32F[0] === 0.5);
+        one.delete();
+        acc.delete();
+    }
+});
